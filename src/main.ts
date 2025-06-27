@@ -192,10 +192,9 @@ public markEditor(view: MarkdownView | null) {
       return new Worker(new URL('./parserWorker.js', import.meta.url));
     } catch (_) { /* fall through */ }
   
-    /* 2 · Universal fallback – read the bundled asset via Vault      */
-    const src = await this.app.vault.adapter.read(
-      `.obsidian/plugins/${this.manifest.id}/parserWorker.js`
-    );
+    /* 2 · Universal fallback      */
+    const workerPath = `${this.app.vault.configDir}/plugins/${this.manifest.id}/parserWorker.js`;
+    const src = await this.app.vault.adapter.read(workerPath);
     return new Worker(
       URL.createObjectURL(new Blob([src], { type: 'text/javascript' }))
     );
@@ -224,22 +223,26 @@ public markEditor(view: MarkdownView | null) {
   }
 
   private async exportScript(file: TFile, fmt: 'pdf' | 'fdx') {
-    // ─── Desktop only — load Node deps ───────────────────────────
-    if (!(await loadDesktopDeps()) || !fs || !path || !run) {
+    // ─── Desktop only — ensure Node deps & correct vault adapter ───
+    if (
+      !(await loadDesktopDeps()) ||
+      !(this.app.vault.adapter instanceof FileSystemAdapter) ||
+      !fs || !path || !run
+    ) {
       new Notice('Export is available on Desktop only');
       return;
     }
   
-    const { join } = path;
-  
-    const vaultDir = (this.app.vault.adapter as FileSystemAdapter).getBasePath();
-    const outDir   = join(vaultDir, 'scripts', 'exports');
+    // Safely cast adapter after instanceof check
+    const adapter = this.app.vault.adapter as FileSystemAdapter;
+    const vaultDir = adapter.getBasePath();
+    const outDir = path.join(vaultDir, 'scripts', 'exports');
     await fs.promises.mkdir(outDir, { recursive: true });
   
-    const cmd  = 'fountain';  // fountain-cli
+    const cmd = 'fountain'; // fountain-cli
     const args = [
       file.path,
-      '--output', join(outDir, `${file.basename}.${fmt}`)
+      '--output', path.join(outDir, `${file.basename}.${fmt}`)
     ];
     if (fmt === 'pdf') args.push('--pdf');
   
@@ -251,7 +254,6 @@ public markEditor(view: MarkdownView | null) {
       new Notice(`Export failed: ${e.message}`);
     }
   }
-  
 
   /* ---------- Indentation toggle ------------------------------ */
   /** Master switch for left-flush / classic margins */
@@ -356,59 +358,66 @@ private applyHighlight({ tokens, error }: any) {
   public updateStatusBar(){
     if (!this.statusEl) return;
     const v = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!v){ this.statusEl.setText(''); return; }
-
-    const ln = v.editor.getCursor().line;
+    if (!v){
+      this.statusEl.setText('');
+      // reset to the base class only
+      this.statusEl.className = 'scr-status';
+      return;
+    }
+  
+    const ln   = v.editor.getCursor().line;
     const type = this.lineTypeMap.get(ln);
-    if (!type){ this.statusEl.setText(''); this.statusEl.style.color=''; return; }
-
+    if (!type){
+      this.statusEl.setText('');
+      this.statusEl.className = 'scr-status';
+      return;
+    }
+  
+    // Show the current token name
     this.statusEl.setText(type.toUpperCase());
-    if (this.settings.enableSyntaxColours){
-      const key = type as ColourKey;
-      const tint = this.settings.colours[key] ?? THEME_COLOURS[key] ?? 'var(--text-normal)';
-      this.statusEl.style.color = tint;
-    } else this.statusEl.style.color='';
+    // Apply a CSS class instead of inline styles
+    this.statusEl.className = `scr-status scr-status--${type}`;
   }
+  
 
   /* ---------- Colour-CSS inject ------------------------------- */
-  private injectColourCSS(){
-    this.styleEl?.remove(); this.styleEl = document.createElement('style');
-    this.styleEl.id='screenwriter-theme-colours';
-
-    if (!this.settings.enableSyntaxColours){
+  private injectColourCSS() {
+    this.styleEl?.remove();
+    this.styleEl = document.createElement('style');
+    this.styleEl.id = 'screenwriter-theme-colours';
+  
+    // Base reset if syntax-colours disabled
+    if (!this.settings.enableSyntaxColours) {
       this.styleEl.textContent = `
-        .scr-page .cm-line[class*="scr-"]{color:var(--text-normal)!important;}
-        .scr-page .cm-content .scr-ext,
-        .scr-page .cm-content .scr-note-inline,
-        .scr-page .cm-content .scr-note-inline a{
-          color:var(--text-normal)!important;background:none!important;border-bottom:none!important;
-        }`;
-      document.head.appendChild(this.styleEl); return;
+        .scr-page .cm-line[class*="scr-"] {
+          color: var(--text-normal) !important;
+        }
+        .scr-page .scr-ext,
+        .scr-page .scr-note-inline,
+        .scr-page .scr-note-inline a {
+          color: var(--text-normal) !important;
+          background: none !important;
+          border-bottom: none !important;
+        }
+      `;
+      document.head.appendChild(this.styleEl);
+      return;
     }
-
-    const css:string[]=[];
-    (Object.keys(TOKEN_CLASS) as ColourKey[]).forEach(k=>{
-      const cls=TOKEN_CLASS[k];
-      const clr=this.settings.colours[k]??THEME_COLOURS[k];
-      if (!cls.startsWith('scr-sec')) css.push(`.scr-page .cm-line.${cls}{color:${clr};}`);
+  
+    // Generate one rule per token class
+    const rules: string[] = [];
+    (Object.keys(TOKEN_CLASS) as ColourKey[]).forEach(key => {
+      const cls = TOKEN_CLASS[key];
+      if (!cls.startsWith('scr-sec')) {
+        const colour = this.settings.colours[key] ?? THEME_COLOURS[key];
+        rules.push(`.scr-page .cm-line.${cls} { color: ${colour}; }`);
+      }
     });
-    css.push(`
-      .scr-page .cm-content .scr-ext{color:var(--text-muted);font-style:italic;}
-      .scr-page .cm-line.scr-dialogue-dual,
-      .scr-page .cm-line.scr-char-dual{
-        border-left:2px dashed var(--text-muted);padding-left:4px;
-      }
-      .scr-hover-tooltip{
-        padding:2px 6px;background:var(--background-secondary);
-        border:1px solid var(--background-modifier-border);border-radius:4px;
-        font-size:var(--font-small);opacity:0;animation:scr-tip-fade 2.5s forwards;
-        pointer-events:none;
-      }
-      @keyframes scr-tip-fade{0%{opacity:0;}10%{opacity:1;}80%{opacity:1;}100%{opacity:0;}}
-    `);
-    this.styleEl.textContent = css.join('\n');
+  
+    this.styleEl.textContent = rules.join('\n');
     document.head.appendChild(this.styleEl);
   }
+  
 
   /* ---------- Utils ------------------------------------------- */
   private isScriptFile(file:TFile|null){
