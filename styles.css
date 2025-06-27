@@ -6,9 +6,9 @@
 
 /* 0 · Typeface ─────────────────────────────────────────────────*/
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-.scr-page .cm-editor{
+.scr-page .cm-content{
   font-family:"Courier Prime","Courier New",monospace !important;
-  font-size:12pt !important;
+  font-size: clamp(8pt, 3vw, 14pt) !important;
   line-height:1.3;
 }
 
