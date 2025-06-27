@@ -3,12 +3,9 @@
 	"name": "Fountain Screenwriter",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "An Obsidian screenwriting plugin powered by Fountain-JS: real-time syntax highlighting, dynamic page formatting, status-bar read-outs, hover tooltips, and & mobile support.",
+	"description": "A screenwriting plugin powered by Fountain-JS: real-time syntax highlighting, dynamic page formatting, status-bar read-outs, hover tooltips, and & mobile support.",
 	"author": "Tlorien",
 	"authorUrl": "https://github.com/tlorien",
-	"repoUrl": "https://github.com/your-profile/obsidian-fountain-screenwriter",
 	"fundingUrl": "https://buymeacoffee.com/tlorien",
-	"isDesktopOnly": false,
-	"style": "styles/highlight.css",
-	"license": "GPL-3.0-or-later"
+	"isDesktopOnly": false
   }  
