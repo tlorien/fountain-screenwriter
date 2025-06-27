@@ -79,10 +79,3 @@ Find support, report issues, or contribute here on GitHub.
 
 ## 📜 License
 Distributed under the GNU License. See LICENSE for details.
-=======
-# fountain-screenwriter
-<<<<<<< HEAD
-An Obsidian screenwriting plugin powered by Fountain-JS: real-time syntax highlighting, dynamic page formatting, status-bar read-outs, hover tooltips, and mobile support.
-=======
-An Obsidian screenwriting plugin powered by Fountain-JS: real-time syntax highlighting, dynamic page formatting, status-bar read-outs, hover tooltips, and &amp; mobile support.
->>>>>>> 1698ba32092ad4743fc124a66bbb57cc76813864
