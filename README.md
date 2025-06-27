@@ -74,7 +74,7 @@ Mary watches as her text instantly adopts screenplay styling in Obsidian—no ex
 ```
 
 ## ❤️ Credits & Support
-Built with ❤️ using `Fountain-JS` and Obsidian’s plugin API.
+Built with ❤️ using `@thombruce/Fountain-JS` and Obsidian’s plugin API.
 Find support, report issues, or contribute here on GitHub.
 
 ## 📜 License
