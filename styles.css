@@ -1,0 +1,129 @@
+/* 0 · Typeface ─────────────────────────────────────────────────*/
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+.scr-page.cm-editor{
+  font-family:"Courier Prime","Courier New",monospace !important;
+  font-size:12pt !important;
+  line-height:1.3;
+}
+
+/* 1 · Centred virtual page (78 characters ≈ 6 in) ─────────────*/
+.scr-page .cm-content{
+  max-width:78ch;
+  margin:0 auto !important;
+}
+
+/* 2 · Tab-stops (in character units) ──────────────────────────*/
+:root{
+  --tab-0:  0ch;   /* scene / action flush     */
+  --tab-1: 12ch;   /* dialogue / parenthetical */
+  --tab-2: 22ch;   /* character cues           */
+  --tab-3: 70ch;   /* transition right edge    */
+}
+
+/* 3 · Block positions ─────────────────────────────────────────*/
+.scr-page .cm-line.scr-scene,
+.scr-page .cm-line.scr-action,
+.scr-page .cm-line.scr-sec-1,
+.scr-page .cm-line.scr-sec-2,
+.scr-page .cm-line.scr-sec-3,
+.scr-page .cm-line.scr-sec-4,
+.scr-page .cm-line.scr-sec-5,
+.scr-page .cm-line.scr-sec-6 {
+  padding-left:var(--tab-0) !important;
+}
+.scr-page .cm-line.scr-char,
+.scr-page .cm-line.scr-char-dual { padding-left: var(--tab-2) !important; }
+
+.scr-page .cm-line.scr-lyric,
+.scr-page .cm-line.scr-dialogue,
+.scr-page .cm-line.scr-dialogue-dual,
+.scr-page .cm-line.scr-paren      { padding-left: var(--tab-1) !important; }
+
+.scr-page .cm-line.scr-dialogue,
+.scr-page .cm-line.scr-dialogue-dual { padding-right: 6ch !important; }
+
+.scr-page .cm-line.scr-trans {
+  padding: 0 !important;
+  margin-left: auto !important;
+  padding-right: .2in !important;
+  text-align: right !important;
+  white-space: normal !important;
+  border-left: none !important;
+}
+
+.scr-page .cm-line.scr-syn {
+  padding-left: 6ch !important;
+  font-style: italic;
+}
+
+/* 3-A · Centred text ─────────────────────────────────────*/
+.scr-page .cm-line.scr-centered {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+
+/*──────── override Obsidian double-bracket link style ─────*/
+.scr-page .cm-line.scr-note,
+.scr-page .cm-content .scr-note-inline,
+.scr-page .cm-content .scr-note-inline a {
+  color: var(--text-faint) !important;
+  text-decoration: underline dotted 1px var(--text-faint);
+}
+
+.scr-page .cm-content .scr-note-inline a {
+  pointer-events: none;   /* optional: disable click-through */
+}
+
+/* 3-B · Act / section level-1 ─────────*/
+.scr-page .cm-line.scr-sec-1 {
+  text-align: center !important;
+  text-decoration: underline;
+}
+
+/* 4 · Dual-dialogue bar ───────────────────────────────────────*/
+.scr-page .cm-line.scr-dialogue-dual,
+.scr-page .cm-line.scr-char-dual {
+  border-left: 2px dashed var(--text-muted);
+  padding-left: 2ch;
+}
+
+/* 5 · Title-page keys ───────────────────────────────*/
+.scr-page .cm-line.scr-title,
+.scr-page .cm-line.scr-credit,
+.scr-page .cm-line.scr-author,
+.scr-page .cm-line.scr-source,
+.scr-page .cm-line.scr-draftdate,
+.scr-page .cm-line.scr-contact { text-align: center !important; }
+
+/* 6 · Inline marks & emphasis (colours injected at runtime) ──*/
+.scr-page .cm-content .scr-ext         { font-style: italic; }
+.scr-page .cm-content .scr-note-inline { background: rgba(255,102,212,.12);
+                                         border-bottom: 1px dotted var(--text-accent); }
+.scr-page .cm-content .scr-em-italic     { font-style: italic; }
+.scr-page .cm-content .scr-em-bold       { font-weight: bold; }
+.scr-page .cm-content .scr-em-bolditalic { font-style: italic; font-weight: bold; }
+.scr-page .cm-content .scr-em-underline  { text-decoration: underline; }
+
+/* 8 · Print overrides (letter spec) ───────────────────────────*/
+@media print {
+  .scr-page .cm-content { max-width: 72ch; margin: 0 auto !important; }
+}
+
+/*──────── A · invisible delimiters for underline “_text_” ─────────*/
+.scr-page .cm-content .scr-hide {
+  opacity: 0 !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  visibility: hidden !important;
+  display: inline-block;
+}
+
+/*──────── B · flex-centred screenplay lines (>TEXT<) ─────────────*/
+.scr-page .cm-line.scr-centered {
+  display: flex !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
