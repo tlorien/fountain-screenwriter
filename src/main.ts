@@ -46,7 +46,6 @@ interface ScreenwriterSettings {
   showHoverHints:      boolean;
   enableSyntaxColours: boolean;
   enableIndentation:   boolean;
-  mobileScale:         number;
 }
 
 const DEFAULT_SETTINGS: ScreenwriterSettings = {
@@ -54,7 +53,6 @@ const DEFAULT_SETTINGS: ScreenwriterSettings = {
   showHoverHints: true,
   enableSyntaxColours: true,
   enableIndentation: true,
-  mobileScale: 0.85,
 };
 
 const THEME_COLOURS: Record<ColourKey, string> = {
