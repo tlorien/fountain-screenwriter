@@ -39,7 +39,8 @@ async function loadDesktopDeps(): Promise<boolean> {
 type ColourKey =
   | 'scene_heading' | 'section' | 'character' | 'dialogue' | 'transition'
   | 'action' | 'parenthetical' | 'lyric' | 'title' | 'credit' | 'author'
-  | 'source' | 'draft_date' | 'contact' | 'synopsis' | 'note' | 'centered';
+  | 'source' | 'draft_date' | 'contact' | 'synopsis' | 'note' | 'centered'
+  | 'extension';
 
 interface ScreenwriterSettings {
   colours: Partial<Record<ColourKey, string>>;
@@ -73,6 +74,7 @@ const THEME_COLOURS: Record<ColourKey, string> = {
   synopsis      : 'var(--text-faint)',
   note          : 'var(--text-faint)',
   centered      : 'scr-centered',
+  extension     : 'var(--text-muted)',
 };
 
 /* 2.  Fountain token → CSS class map */
@@ -83,6 +85,7 @@ const TOKEN_CLASS: Record<ColourKey|'unknown',string> = {
   credit:'scr-credit',        author:'scr-author',      source:'scr-source',
   draft_date:'scr-draftdate', contact:'scr-contact',    synopsis:'scr-syn',
   note:'scr-note',            unknown:'scr-unknown',    centered:'scr-centered',
+  extension:'scr-ext',
 };
 
 /* 3.  Main plugin */
@@ -149,7 +152,9 @@ export default class ScreenwriterPlugin extends Plugin {
 
     /* Initial parse */
     this.reparseActive();
-    this.worker.onmessage = ({data}) => this.applyHighlight(data);
+    this.worker.onmessage = ({data}) => {
+      console.log('[Screenwriter] Fountain AST:', data);
+      this.applyHighlight(data);}
   }                                           /* ◀── end onload —— */
 
   /* ────────── HELPERS ─────────────────────────────────────────── */
@@ -321,10 +326,12 @@ private applyHighlight({ tokens, error }: any) {
     /* mirror preceding “Key:” line on title-page ---------------- */
     if (
       t.line > 0 &&
-      /^scr-(title|credit|author|source|draftdate|contact)$/.test(cls)
+      /^(scr-(title|credit|author|source|draftdate|contact))$/.test(cls) &&
+      !this.lineTypeMap.has(t.line - 1)
     ) {
-      lines.push({ line: t.line - 1, cls });
-      this.lineTypeMap.set(t.line - 1, t.type);
+      const prev = t.line - 1;
+      lines.push({ line: prev, cls });
+      this.lineTypeMap.set(prev, t.type);
     }
 
     /* ---------- character extension mark ---------- */
@@ -386,15 +393,17 @@ private applyHighlight({ tokens, error }: any) {
     this.styleEl = document.createElement('style');
     this.styleEl.id = 'screenwriter-theme-colours';
   
-    // Base reset if syntax-colours disabled
+    // ── 1) If syntax-colours are disabled, force everything to the normal text colour
     if (!this.settings.enableSyntaxColours) {
       this.styleEl.textContent = `
+        /* lines */
         .scr-page .cm-line[class*="scr-"] {
           color: var(--text-normal) !important;
         }
-        .scr-page .scr-ext,
-        .scr-page .scr-note-inline,
-        .scr-page .scr-note-inline a {
+        /* inline extensions & notes */
+        .scr-page .cm-content .scr-ext,
+        .scr-page .cm-content .scr-note-inline,
+        .scr-page .cm-content .scr-note-inline a {
           color: var(--text-normal) !important;
           background: none !important;
           border-bottom: none !important;
@@ -404,19 +413,40 @@ private applyHighlight({ tokens, error }: any) {
       return;
     }
   
-    // Generate one rule per token class
+    // ── 2) Build one rule per token line class
     const rules: string[] = [];
     (Object.keys(TOKEN_CLASS) as ColourKey[]).forEach(key => {
-      const cls = TOKEN_CLASS[key];
+      const cls    = TOKEN_CLASS[key];
+      const colour = this.settings.colours[key] ?? THEME_COLOURS[key];
+      // skip any panel-wide “section-depth” classes if you prefer
       if (!cls.startsWith('scr-sec')) {
-        const colour = this.settings.colours[key] ?? THEME_COLOURS[key];
         rules.push(`.scr-page .cm-line.${cls} { color: ${colour}; }`);
       }
     });
   
+    // ── 3) Inline extension marks (e.g. JOHN (on the phone))
+    const extColour = this.settings.colours.extension ?? THEME_COLOURS.extension;
+    rules.push(`
+      .scr-page .cm-content .scr-ext {
+        color: ${extColour};
+      }
+    `);
+  
+    // ── 4) Inline notes
+    const noteColour = this.settings.colours.note ?? THEME_COLOURS.note;
+    rules.push(`
+      .scr-page .cm-content .scr-note-inline,
+      .scr-page .cm-content .scr-note-inline a {
+        color: ${noteColour};
+        background: rgba(255,102,212,.12);
+        border-bottom: 1px dotted var(--text-accent);
+      }
+    `);
+  
     this.styleEl.textContent = rules.join('\n');
     document.head.appendChild(this.styleEl);
   }
+  
   
 
   /* ---------- Utils ------------------------------------------- */
