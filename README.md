@@ -78,4 +78,4 @@ Built with ❤️ using `@thombruce/Fountain-JS` and Obsidian’s plugin API.
 Find support, report issues, or contribute here on GitHub.
 
 ## 📜 License
-Distributed under the GNU License. See LICENSE for details.
+Distributed under the GPL-3.0 license. See LICENSE for details.
