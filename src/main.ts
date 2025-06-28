@@ -1,6 +1,13 @@
 import {
-  Plugin, PluginSettingTab, Setting,
-  MarkdownView, Notice, FileSystemAdapter, TFile, Editor, Platform,
+  Plugin,
+  PluginSettingTab,
+  Setting,
+  MarkdownView,
+  Notice,
+  TFile,
+  Editor,
+  Platform,
+  FileSystemAdapter
 } from 'obsidian';
 import {
   fountainHighlightExtension,
@@ -228,7 +235,6 @@ public markEditor(view: MarkdownView | null) {
   }
 
   private async exportScript(file: TFile, fmt: 'pdf' | 'fdx') {
-    // ─── Desktop only — ensure Node deps & correct vault adapter ───
     if (
       !(await loadDesktopDeps()) ||
       !(this.app.vault.adapter instanceof FileSystemAdapter) ||
@@ -237,10 +243,9 @@ public markEditor(view: MarkdownView | null) {
       new Notice('Export is available on Desktop only');
       return;
     }
-  
-    // Safely cast adapter after instanceof check
-    const adapter = this.app.vault.adapter as FileSystemAdapter;
-    const vaultDir = adapter.getBasePath();
+
+    const adapter = this.app.vault.adapter;
+    const vaultDir = adapter.getBasePath();    
     const outDir = path.join(vaultDir, 'scripts', 'exports');
     await fs.promises.mkdir(outDir, { recursive: true });
   
