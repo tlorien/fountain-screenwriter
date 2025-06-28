@@ -49,11 +49,23 @@ type ColourKey =
   | 'source' | 'draft_date' | 'contact' | 'synopsis' | 'note' | 'centered'
   | 'extension';
 
+type ScriptFont =
+| 'Courier Prime'
+| 'Atkinson Monolegible'
+| 'Courier New'
+| 'Menlo'
+| 'Consolas'
+| 'Monaco'
+| 'monospace';
+
 interface ScreenwriterSettings {
   colours: Partial<Record<ColourKey, string>>;
   showHoverHints:      boolean;
   enableSyntaxColours: boolean;
   enableIndentation:   boolean;
+  tooltipBackground:   string;
+  tooltipText:         string;
+  scriptFont: ScriptFont;
 }
 
 const DEFAULT_SETTINGS: ScreenwriterSettings = {
@@ -61,6 +73,9 @@ const DEFAULT_SETTINGS: ScreenwriterSettings = {
   showHoverHints: true,
   enableSyntaxColours: true,
   enableIndentation: true,
+  tooltipBackground: 'var(--background-secondary)',
+  tooltipText:       'var(--text-normal)',
+  scriptFont: 'Courier Prime',
 };
 
 const THEME_COLOURS: Record<ColourKey, string> = {
@@ -134,7 +149,7 @@ export default class ScreenwriterPlugin extends Plugin {
     this.statusEl.addClass('scr-status');
     this.statusEl.setText('…');
 
-    this.addSettingTab(new ColourSettingTab(this));
+    this.addSettingTab(new MainSettingTab(this));
     if (!Platform.isMobileApp) this.registerDesktopExportCommands();
 
     /* Workspace listeners */
@@ -393,18 +408,30 @@ private applyHighlight({ tokens, error }: any) {
   
 
   /* ---------- Colour-CSS inject ------------------------------- */
-  private injectColourCSS() {
+  public injectColourCSS() {
+    // Tear down any existing style element
     this.styleEl?.remove();
     this.styleEl = document.createElement('style');
     this.styleEl.id = 'screenwriter-theme-colours';
   
-    // ── 1) If syntax-colours are disabled, force everything to the normal text colour
+    // 0) Build the font‐family rule (assumes you have a `fontRule` string defined earlier)
+    const fontRule = `
+      /* user‐selected script font */
+      .scr-page .cm-editor {
+        font-family: ${this.settings.scriptFont} !important;
+      }
+    `;
+  
+    // 1) If syntax‐colours are disabled, force everything to a single colour
     if (!this.settings.enableSyntaxColours) {
       this.styleEl.textContent = `
-        /* lines */
+        ${fontRule}
+  
+        /* lines all default text colour */
         .scr-page .cm-line[class*="scr-"] {
           color: var(--text-normal) !important;
         }
+  
         /* inline extensions & notes */
         .scr-page .cm-content .scr-ext,
         .scr-page .cm-content .scr-note-inline,
@@ -413,23 +440,29 @@ private applyHighlight({ tokens, error }: any) {
           background: none !important;
           border-bottom: none !important;
         }
+  
+        /* hover tooltip (still shown even when colours off) */
+        .scr-hover-tooltip {
+          background: ${this.settings.tooltipBackground} !important;
+          color:      ${this.settings.tooltipText}       !important;
+        }
       `;
       document.head.appendChild(this.styleEl);
       return;
     }
   
-    // ── 2) Build one rule per token line class
-    const rules: string[] = [];
+    // 2) Otherwise, generate per-token line‐colour rules
+    const rules: string[] = [ fontRule ];
+  
     (Object.keys(TOKEN_CLASS) as ColourKey[]).forEach(key => {
       const cls    = TOKEN_CLASS[key];
       const colour = this.settings.colours[key] ?? THEME_COLOURS[key];
-      // skip any panel-wide “section-depth” classes if you prefer
       if (!cls.startsWith('scr-sec')) {
         rules.push(`.scr-page .cm-line.${cls} { color: ${colour}; }`);
       }
     });
   
-    // ── 3) Inline extension marks (e.g. JOHN (on the phone))
+    // 3) Inline extension marks
     const extColour = this.settings.colours.extension ?? THEME_COLOURS.extension;
     rules.push(`
       .scr-page .cm-content .scr-ext {
@@ -437,7 +470,7 @@ private applyHighlight({ tokens, error }: any) {
       }
     `);
   
-    // ── 4) Inline notes
+    // 4) Inline notes
     const noteColour = this.settings.colours.note ?? THEME_COLOURS.note;
     rules.push(`
       .scr-page .cm-content .scr-note-inline,
@@ -448,11 +481,18 @@ private applyHighlight({ tokens, error }: any) {
       }
     `);
   
+    // 5) Hover tooltip colours
+    rules.push(`
+      .scr-hover-tooltip {
+        background: ${this.settings.tooltipBackground} !important;
+        color:      ${this.settings.tooltipText}       !important;
+      }
+    `);
+  
+    // Inject the combined CSS
     this.styleEl.textContent = rules.join('\n');
     document.head.appendChild(this.styleEl);
-  }
-  
-  
+  }  
 
   /* ---------- Utils ------------------------------------------- */
   private isScriptFile(file:TFile|null){
@@ -472,18 +512,69 @@ private applyHighlight({ tokens, error }: any) {
 /* ────────────────────────────────────────────────────────────────── */
 /*  4.  Settings tab                                                  */
 /* ────────────────────────────────────────────────────────────────── */
-class ColourSettingTab extends PluginSettingTab{
+class MainSettingTab extends PluginSettingTab{
   constructor(private plugin:ScreenwriterPlugin){ super(plugin.app,plugin); }
   display(){
     const {containerEl:c}=this; c.empty();
 
     c.createEl('h2',{text:'Behaviour'});
+    /* font */
+    new Setting(c)
+      .setName('Script font')
+      .setDesc('Pick a single font for your screenplay text')
+      .addDropdown(drop => {
+        drop
+          .addOptions({
+            'Courier Prime'         : 'Courier Prime',
+            'Atkinson Monolegible'  : 'Atkinson Monolegible',
+            'Courier New'           : 'Courier New',
+            'Menlo'                 : 'Menlo',
+            'Consolas'              : 'Consolas',
+            'Monaco'                : 'Monaco',
+            'monospace'             : 'monospace',
+          })
+          .setValue(this.plugin.settings.scriptFont)
+          .onChange(async (v) => {
+            this.plugin.settings.scriptFont = v as ScriptFont;
+            await this.plugin.saveData(this.plugin.settings);
+            this.plugin.injectColourCSS();
+          });
+      });
     /* hover */
-    new Setting(c).setName('Show hover hints')
-      .addToggle(t=>t.setValue(this.plugin.settings.showHoverHints)
-        .onChange(async v=>{
-          this.plugin.settings.showHoverHints=v; await this.plugin.saveData(this.plugin.settings);
-        }));
+    new Setting(c)
+      .setName('Show hover hints')
+      .addToggle(toggle => {
+        toggle
+          .setValue(this.plugin.settings.showHoverHints)
+          .onChange(async (v) => {
+            this.plugin.settings.showHoverHints = v;
+            await this.plugin.saveData(this.plugin.settings);
+            // re-inject so tooltip CSS updates (or gets removed) immediately
+            this.plugin.injectColourCSS();
+          });
+      })
+      // background colour picker
+      .addText(text => {
+        text.inputEl.type = 'color';
+        text
+          .setValue(this.plugin.settings.tooltipBackground)
+          .onChange(async (v) => {
+            this.plugin.settings.tooltipBackground = v || DEFAULT_SETTINGS.tooltipBackground;
+            await this.plugin.saveData(this.plugin.settings);
+            this.plugin.injectColourCSS();
+          });
+      })
+      // text colour picker
+      .addText(text => {
+        text.inputEl.type = 'color';
+        text
+          .setValue(this.plugin.settings.tooltipText)
+          .onChange(async (v) => {
+            this.plugin.settings.tooltipText = v || DEFAULT_SETTINGS.tooltipText;
+            await this.plugin.saveData(this.plugin.settings);
+            this.plugin.injectColourCSS();
+          });
+      });
     /* colours */
     new Setting(c).setName('Syntax colours')
       .addToggle(t=>t.setValue(this.plugin.settings.enableSyntaxColours)
