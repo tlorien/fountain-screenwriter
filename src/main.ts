@@ -414,7 +414,7 @@ private applyHighlight({ tokens, error }: any) {
     this.styleEl = document.createElement('style');
     this.styleEl.id = 'screenwriter-theme-colours';
   
-    // 0) Build the font‐family rule (assumes you have a `fontRule` string defined earlier)
+    // Build the font‐family rule
     const fontRule = `
       /* user‐selected script font */
       .scr-page .cm-editor {
