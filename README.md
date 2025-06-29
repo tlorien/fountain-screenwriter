@@ -2,7 +2,7 @@
 
 A powerful Obsidian screenwriting plugin powered by [Fountain-JS](https://fountain.io/): real-time syntax highlighting, classic virtual page formatting, dynamic indentation & colour themes, status-bar line-type read-outs, hover tooltips, and seamless desktop & mobile support.
 
-![Desktop screenshot](images/desktop-1.png)
+<img src="images/desktop-1.png" alt="Desktop screenshot" style="max-width: 100%; height: auto; max-height: 600px;" />
 
 ---
 
@@ -20,9 +20,9 @@ Your script adopts the classic 78-character page width, centered in the editor�
 **Responsive mobile support**
 Portrait or landscape, your pages reflow gracefully on every screen. No more tiny fonts or clipped margins on your phone.
 
-![Mobile screenshot in landscape](images/mobile-landscape.png)
+<img src="images/mobile-landscape.png" alt="Mobile screenshot in landscape" style="max-width: 100%; height: auto; max-height: 400px;" />
 
-![Mobile screenshot in portrait](images/mobile-portrait.png)
+<img src="images/mobile-portrait.png" alt="Mobile screenshot in portrait" style="max-width: 100%; height: auto; max-height: 500px;" />
 
 **Dynamic indentation toggle**
 Switch between flush-left and screenplay-style margins on the fly. One click in the settings keeps you in “classic” or “modern” mode.
