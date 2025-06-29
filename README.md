@@ -58,6 +58,8 @@ Head to `Settings` → `Fountain Screenwriter` to tailor your experience:
 
 - **Colour Overrides**: Pick your own color for Scene Headings, Dialogue, Transitions, and more.
 
+- **Typewriter Mode**: Keep the line you’re working on locked in the center of the view for that old-school typewriter feel.
+
 ## 📖 Usage
 In any note, add YAML frontmatter:
 
