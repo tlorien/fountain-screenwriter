@@ -22,7 +22,7 @@ Portrait or landscape, your pages reflow gracefully on every screen. No more tin
 
 <img src="images/mobile-landscape.png" alt="Mobile screenshot in landscape" style="max-width: 100%; height: auto; max-height: 400px;" />
 
-<img src="images/mobile-portrait.png" alt="Mobile screenshot in portrait" style="max-width: 100%; height: auto; max-height: 500px;" />
+<img src="images/mobile-portrait.png" alt="Mobile screenshot in portrait" style="max-width: 75%; height: auto; max-height: 500px;" />
 
 **Dynamic indentation toggle**
 Switch between flush-left and screenplay-style margins on the fly. One click in the settings keeps you in “classic” or “modern” mode.
