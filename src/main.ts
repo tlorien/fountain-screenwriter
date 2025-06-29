@@ -66,6 +66,7 @@ interface ScreenwriterSettings {
   tooltipBackground:   string;
   tooltipText:         string;
   scriptFont: ScriptFont;
+  typewriterScrolling: boolean;
 }
 
 const DEFAULT_SETTINGS: ScreenwriterSettings = {
@@ -76,6 +77,7 @@ const DEFAULT_SETTINGS: ScreenwriterSettings = {
   tooltipBackground: 'var(--background-secondary)',
   tooltipText:       'var(--text-normal)',
   scriptFont: 'Courier Prime',
+  typewriterScrolling: false,
 };
 
 const THEME_COLOURS: Record<ColourKey, string> = {
@@ -126,7 +128,7 @@ export default class ScreenwriterPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    /* order matters → reset-indent FIRST, colours SECOND */
+    /* order matters: reset-indent 1st → colours 2nd */
     this.applyIndentToggle(this.settings.enableIndentation);
     this.injectColourCSS();
 
@@ -135,9 +137,27 @@ export default class ScreenwriterPlugin extends Plugin {
     const caretExt = EditorView.updateListener.of((vu:ViewUpdate) => {
       if (vu.selectionSet) this.updateStatusBar();
     });
-    this.registerEditorExtension([
-      fountainHighlightExtension(), this.hoverExt, caretExt,
-    ]);
+    const typewriterExt = EditorView.updateListener.of((vu: ViewUpdate) => {
+      if (!vu.selectionSet || !this.settings.typewriterScrolling) return;
+      const view = vu.view;
+      const { head } = view.state.selection.main;
+      const coords = view.coordsAtPos(head);
+      if (!coords) return;
+    
+      // scrollDOM is the CM6 scroll container
+      const container = view.scrollDOM;
+      const middle = container.clientHeight / 2;
+    
+      // adjust scrollTop so that the cursor line is at middle
+      container.scrollTop += coords.top - middle;
+    });
+    
+    this.registerEditorExtension([  
+      fountainHighlightExtension(),
+      this.hoverExt,
+      caretExt,
+      typewriterExt,
+    ]);    
 
     /* Parser worker */
     this.worker = await this.makeWorker();
@@ -521,7 +541,7 @@ class MainSettingTab extends PluginSettingTab{
     /* font */
     new Setting(c)
       .setName('Script font')
-      .setDesc('Pick a single font for your screenplay text')
+      .setDesc('Pick the font you want for your screenplay text—whether classic Courier Prime or something more unique.')
       .addDropdown(drop => {
         drop
           .addOptions({
@@ -543,6 +563,7 @@ class MainSettingTab extends PluginSettingTab{
     /* hover */
     new Setting(c)
       .setName('Show hover hints')
+      .setDesc('Display a subtle pop-up when you hover over lines, telling you if it’s a scene heading, character name, dialogue, etc')
       .addToggle(toggle => {
         toggle
           .setValue(this.plugin.settings.showHoverHints)
@@ -575,15 +596,31 @@ class MainSettingTab extends PluginSettingTab{
             this.plugin.injectColourCSS();
           });
       });
+    /* typewriter scrolling */
+    new Setting(c)
+      .setName('Typewriter scrolling')
+      .setDesc('Keep the line you’re working on locked in the center of the view for that old-school typewriter feel')
+      .addToggle(toggle =>
+        toggle
+          .setValue(this.plugin.settings.typewriterScrolling)
+          .onChange(async v => {
+            this.plugin.settings.typewriterScrolling = v;
+            await this.plugin.saveData(this.plugin.settings);
+          })
+      );
     /* colours */
-    new Setting(c).setName('Syntax colours')
+    new Setting(c)
+      .setName('Syntax Highlighting')
+      .setDesc('Automatically color-code parts of your script (scene headings, dialogue, action) so you can see at a glance what’s what')
       .addToggle(t=>t.setValue(this.plugin.settings.enableSyntaxColours)
         .onChange(async v=>{
           this.plugin.settings.enableSyntaxColours=v;
           await this.plugin.updateColours(); this.plugin.updateStatusBar();
         }));
     /* indentation */
-    new Setting(c).setName('Indentation')
+    new Setting(c)
+      .setName('Indentation')
+      .setDesc('Toggle traditional screenplay margins and indents on or off to suit your writing style')
       .addToggle(t=>t.setValue(this.plugin.settings.enableIndentation)
         .onChange(async v=>{
           this.plugin.settings.enableIndentation=v; await this.plugin.saveData(this.plugin.settings);
