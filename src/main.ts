@@ -14,6 +14,7 @@ import {
   setHighlight, setMarks, TokenLine, TokenMark,
 } from './highlight/fountainHighlight';
 import { hoverTooltip, Tooltip, EditorView, ViewUpdate } from '@codemirror/view';
+import { Transaction } from '@codemirror/state';
 
 /** Return every element that can contain CodeMirror in this pane. */
 function cmHosts(view: MarkdownView): HTMLElement[] {
@@ -138,19 +139,19 @@ export default class ScreenwriterPlugin extends Plugin {
       if (vu.selectionSet) this.updateStatusBar();
     });
     const typewriterExt = EditorView.updateListener.of((vu: ViewUpdate) => {
-      if (!vu.selectionSet || !this.settings.typewriterScrolling) return;
-      const view = vu.view;
-      const { head } = view.state.selection.main;
-      const coords = view.coordsAtPos(head);
-      if (!coords) return;
+      // 1) bail if mode is off or selection didn’t actually change
+      if (!this.settings.typewriterScrolling || !vu.selectionSet) return;
     
-      // scrollDOM is the CM6 scroll container
-      const container = view.scrollDOM;
-      const middle = container.clientHeight / 2;
+      // 2) detect pointer‐based selects (click or drag)
+      const pointerEvent = vu.transactions.some(tr => {
+        const ue = tr.annotation(Transaction.userEvent);
+        return ue === 'select.pointer' || ue === 'select.drag';
+      });
+      if (pointerEvent) return;
     
-      // adjust scrollTop so that the cursor line is at middle
-      container.scrollTop += coords.top - middle;
-    });
+      // 3) all other selection changes (keyboard, input, programmatic)… center it
+      this.centerOnView(vu.view);
+    });   
     
     this.registerEditorExtension([  
       fountainHighlightExtension(),
@@ -158,6 +159,11 @@ export default class ScreenwriterPlugin extends Plugin {
       caretExt,
       typewriterExt,
     ]);    
+
+    // If toggled on at startup, immediately snap to center
+    if (this.settings.typewriterScrolling) {
+      this.centerCurrentLine();
+    }
 
     /* Parser worker */
     this.worker = await this.makeWorker();
@@ -189,8 +195,16 @@ export default class ScreenwriterPlugin extends Plugin {
         ed.on('cursorActivity', () => this.updateStatusBar());
       }
     }));
-    this.registerEvent(this.app.workspace.on('file-open', () => this.reparseActive()));
-    this.registerEvent(this.app.workspace.on('layout-change', () => this.reparseActive()));
+
+    this.registerEvent(this.app.workspace.on('file-open', () => {
+      this.reparseActive();
+      if (this.settings.typewriterScrolling) this.centerCurrentLine();
+    }));
+    
+    this.registerEvent(this.app.workspace.on('layout-change', () => {
+      this.reparseActive();
+      if (this.settings.typewriterScrolling) this.centerCurrentLine();
+    }));
 
     /* Initial parse */
     this.reparseActive();
@@ -219,11 +233,11 @@ export default class ScreenwriterPlugin extends Plugin {
     });
   }
 
-public markEditor(view: MarkdownView | null) {
-  if (!view) return;
-  const on = this.isScriptFile(view.file);
-  cmHosts(view).forEach(host => host.classList.toggle('scr-page', on));
-}
+  public markEditor(view: MarkdownView | null) {
+    if (!view) return;
+    const on = this.isScriptFile(view.file);
+    cmHosts(view).forEach(host => host.classList.toggle('scr-page', on));
+  }
 
   private reparseActive(){
     const v = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -300,106 +314,122 @@ public markEditor(view: MarkdownView | null) {
     }
   }
 
+  /** Scroll the given CM6 view so its cursor line sits in the vertical middle. */
+  private centerOnView(view: EditorView) {
+    const pos    = view.state.selection.main.head;
+    const coords = view.coordsAtPos(pos);
+    if (!coords) return;
+    const container = view.scrollDOM;
+    const middle    = container.clientHeight / 2;
+    container.scrollTop += coords.top - middle;
+  }
+
+  /** Find the active MarkdownView → its CM6 EditorView and center it. */
+  public centerCurrentLine() {
+    const md = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!md) return;
+    const cm  = (md.editor as any).cm as EditorView;
+    this.centerOnView(cm);
+  }
+
   /* ---------- Indentation toggle ------------------------------ */
   /** Master switch for left-flush / classic margins */
-public applyIndentToggle(active: boolean) {
-  /* start from a clean slate every time */
-  this.indentResetEl?.remove();
-  this.indentResetEl = null;
+  public applyIndentToggle(active: boolean) {
+    /* start from a clean slate every time */
+    this.indentResetEl?.remove();
+    this.indentResetEl = null;
 
-  /* classic margins wanted → nothing to inject */
-  if (active) return;
+    /* classic margins wanted → nothing to inject */
+    if (active) return;
 
-  /* inject one high-specificity reset scoped to .scr-page */
-  const css = `
-    /* every Fountain line back to flush-left */
-    .scr-page .cm-line[class*="scr-"]{
-      padding-left:0!important;
-      margin-left:0!important;
-      text-align:left!important;
-    }
-    /* cancel right-edge stuff */
-    .scr-page .cm-line.scr-trans{padding-right:0!important;}
-    .scr-page .cm-line.scr-centered{display:block!important;}
-  `;
-  this.indentResetEl = Object.assign(document.createElement('style'), {
-    id         : 'screenwriter-indent-reset',
-    textContent: css,
-  });
-  document.head.appendChild(this.indentResetEl);
-}
-
+    /* inject one high-specificity reset scoped to .scr-page */
+    const css = `
+      /* every Fountain line back to flush-left */
+      .scr-page .cm-line[class*="scr-"]{
+        padding-left:0!important;
+        margin-left:0!important;
+        text-align:left!important;
+      }
+      /* cancel right-edge stuff */
+      .scr-page .cm-line.scr-trans{padding-right:0!important;}
+      .scr-page .cm-line.scr-centered{display:block!important;}
+    `;
+    this.indentResetEl = Object.assign(document.createElement('style'), {
+      id         : 'screenwriter-indent-reset',
+      textContent: css,
+    });
+    document.head.appendChild(this.indentResetEl);
+  }
 
   /* ---------- Highlight pipeline ------------------------------ */
   /** Build CM decorations + status-bar map */
-private applyHighlight({ tokens, error }: any) {
-  if (error || !tokens) return;
+  private applyHighlight({ tokens, error }: any) {
+    if (error || !tokens) return;
 
-  const v = this.app.workspace.getActiveViewOfType(MarkdownView);
-  if (!v) return;
+    const v = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!v) return;
 
-  const lines: TokenLine[] = [];
-  const marks: TokenMark[] = [];
-  this.lineTypeMap.clear();
+    const lines: TokenLine[] = [];
+    const marks: TokenMark[] = [];
+    this.lineTypeMap.clear();
 
-  for (const t of tokens as any[]) {
-    if (t.line === -1) continue;
+    for (const t of tokens as any[]) {
+      if (t.line === -1) continue;
 
-    /* ---------- choose the line class -------------------------- */
-    let cls = TOKEN_CLASS[t.type as ColourKey] ?? TOKEN_CLASS.unknown;
+      /* ---------- choose the line class -------------------------- */
+      let cls = TOKEN_CLASS[t.type as ColourKey] ?? TOKEN_CLASS.unknown;
 
-    if (t.type === 'section'   && typeof t.depth === 'number')
-      cls = `scr-sec-${Math.min(Math.max(1, t.depth), 6)}`;
-    if (t.dual && t.type === 'character') cls = 'scr-char-dual';
-    if (t.dual && t.type === 'dialogue')  cls = 'scr-dialogue-dual';
-    if (t.type === 'synopsis')            cls = 'scr-syn';
+      if (t.type === 'section'   && typeof t.depth === 'number')
+        cls = `scr-sec-${Math.min(Math.max(1, t.depth), 6)}`;
+      if (t.dual && t.type === 'character') cls = 'scr-char-dual';
+      if (t.dual && t.type === 'dialogue')  cls = 'scr-dialogue-dual';
+      if (t.type === 'synopsis')            cls = 'scr-syn';
 
-    const raw = v.editor.getLine(t.line);
-    if (t.type === 'note' && raw.trim() === `[[${t.text}]]`) cls = 'scr-note';
+      const raw = v.editor.getLine(t.line);
+      if (t.type === 'note' && raw.trim() === `[[${t.text}]]`) cls = 'scr-note';
 
-    /* ---------- status-bar lookup map -------------------------- */
-    if (raw.trim() !== '') this.lineTypeMap.set(t.line, t.type);
+      /* ---------- status-bar lookup map -------------------------- */
+      if (raw.trim() !== '') this.lineTypeMap.set(t.line, t.type);
 
-    /* ---------- push line decoration --------------------------- */
-    lines.push({ line: t.line, cls });
+      /* ---------- push line decoration --------------------------- */
+      lines.push({ line: t.line, cls });
 
-    /* mirror preceding “Key:” line on title-page ---------------- */
-    if (
-      t.line > 0 &&
-      /^(scr-(title|credit|author|source|draftdate|contact))$/.test(cls) &&
-      !this.lineTypeMap.has(t.line - 1)
-    ) {
-      const prev = t.line - 1;
-      lines.push({ line: prev, cls });
-      this.lineTypeMap.set(prev, t.type);
-    }
+      /* mirror preceding “Key:” line on title-page ---------------- */
+      if (
+        t.line > 0 &&
+        /^(scr-(title|credit|author|source|draftdate|contact))$/.test(cls) &&
+        !this.lineTypeMap.has(t.line - 1)
+      ) {
+        const prev = t.line - 1;
+        lines.push({ line: prev, cls });
+        this.lineTypeMap.set(prev, t.type);
+      }
 
-    /* ---------- character extension mark ---------- */
-    if (t.ext && t.type === 'character') {
-      const start = raw.indexOf('(');
-      const end   = raw.lastIndexOf(')') + 1;
-      if (start !== -1 && end > start) {
-        const base = v.editor.posToOffset({ line: t.line, ch: 0 });
-        marks.push({
-          from: base + start,
-          to:   base + end,
-          cls:  'scr-ext',
-        });
+      /* ---------- character extension mark ---------- */
+      if (t.ext && t.type === 'character') {
+        const start = raw.indexOf('(');
+        const end   = raw.lastIndexOf(')') + 1;
+        if (start !== -1 && end > start) {
+          const base = v.editor.posToOffset({ line: t.line, ch: 0 });
+          marks.push({
+            from: base + start,
+            to:   base + end,
+            cls:  'scr-ext',
+          });
+        }
       }
     }
+
+    /* keep CM’s RangeSetBuilder happy */
+    lines.sort((a, b) => a.line - b.line);
+    marks.sort((a, b) => (a.from - b.from) || (a.to - b.to));
+
+    (v.editor as any).cm.dispatch({
+      effects: [ setHighlight.of(lines), setMarks.of(marks) ]
+    });
+
+    this.updateStatusBar();
   }
-
-  /* keep CM’s RangeSetBuilder happy */
-  lines.sort((a, b) => a.line - b.line);
-  marks.sort((a, b) => (a.from - b.from) || (a.to - b.to));
-
-  (v.editor as any).cm.dispatch({
-    effects: [ setHighlight.of(lines), setMarks.of(marks) ]
-  });
-
-  this.updateStatusBar();
-}
-
 
   /* ---------- Status-bar -------------------------------------- */
   public updateStatusBar(){
@@ -600,14 +630,15 @@ class MainSettingTab extends PluginSettingTab{
     new Setting(c)
       .setName('Typewriter scrolling')
       .setDesc('Keep the line you’re working on locked in the center of the view for that old-school typewriter feel')
-      .addToggle(toggle =>
-        toggle
-          .setValue(this.plugin.settings.typewriterScrolling)
-          .onChange(async v => {
-            this.plugin.settings.typewriterScrolling = v;
-            await this.plugin.saveData(this.plugin.settings);
-          })
-      );
+         .addToggle(t => {
+     t.setValue(this.plugin.settings.typewriterScrolling)
+      .onChange(async v => {
+         this.plugin.settings.typewriterScrolling = v;
+         await this.plugin.saveData(this.plugin.settings);
+         // when turning on, snap immediately
+         if (v) this.plugin.centerCurrentLine();
+       });
+   });
     /* colours */
     new Setting(c)
       .setName('Syntax Highlighting')
