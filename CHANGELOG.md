@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Vulnerability fixes.
 
 ---
+
 ## Typewriter Scrolling [v1.1.1] - 2026-06-29
 
 ### Changed
@@ -35,7 +36,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     - We inspect each transaction’s userEvent annotation.
     - If the event is select.pointer (a click) or select.drag (a click-and-drag), we skip the recenter.
     - Otherwise (arrow keys, typing, programmatic moves), we call centerOnView() as before.
+
 ---
+
 ## Typewriter Scrolling [v1.1.0] - 2026-06-29
 
 ### Added

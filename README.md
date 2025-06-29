@@ -14,15 +14,11 @@ Full support for [Fountain](https://fountain.io/) markup: scene headings, action
 **Real-time Fountain syntax highlighting**
 Instantly see Scene Headings, Action, Character Cues, Dialogue, Parentheticals, Transitions, Lyrics, Notes, and more in distinct colors.
 
+**Customizable colour themes**
+Choose from built-in palettes or define your own accent colors for every script element.
+
 **True “virtual page” formatting**
 Your script adopts the classic 78-character page width, centered in the editor—just like Final Draft or Fade In.
-
-**Responsive mobile support**
-Portrait or landscape, your pages reflow gracefully on every screen. No more tiny fonts or clipped margins on your phone.
-
-<img src="images/mobile-landscape.png" alt="Mobile screenshot in landscape" style="max-width: 100%; height: auto; max-height: 400px;" />
-
-<img src="images/mobile-portrait.png" alt="Mobile screenshot in portrait" style="max-width: 75%; height: auto;" />
 
 **Dynamic indentation toggle**
 Switch between flush-left and screenplay-style margins on the fly. One click in the settings keeps you in “classic” or “modern” mode.
@@ -33,8 +29,15 @@ Always know which element you’re on—Scene Heading, Dialogue, Action, etc.—
 **Hover tooltips**
 Hover over any line to see its type spelled out (e.g. DIALOGUE, CHARACTER), perfect for catching mis-tagged lines.
 
-**Customizable colour themes**
-Choose from built-in palettes or define your own accent colors for every script element.
+**Typewriter Mode**
+Keep the line you’re working on locked in the center of the view for that old-school typewriter feel.
+
+**Responsive mobile support**
+Portrait or landscape, your pages reflow gracefully on every screen, so you can always write on the go.
+
+<img src="images/mobile-landscape.png" alt="Mobile screenshot in landscape" style="max-width: 350px%; height: auto;" />
+
+<img src="images/mobile-portrait.png" alt="Mobile screenshot in portrait" style="max-width: 300px; height: auto;" />
 
 ---
 
