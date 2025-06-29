@@ -32,9 +32,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Togglable `Typewriter Scrolling` effect.
 
+### Notes
+- Released as v1.0.0 to prevent issues with Obsidian plugin review.
+
 ---
 
-## Initial Release [1.0.0] - 2025-06-28
+## Initial Release [v1.0.0] - 2025-06-28
 
 ### ✨ Features
 #### 📱 Mobile-Friendly Layout
