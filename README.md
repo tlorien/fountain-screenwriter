@@ -35,9 +35,9 @@ Keep the line you’re working on locked in the center of the view for that old-
 **Responsive mobile support**
 Portrait or landscape, your pages reflow gracefully on every screen, so you can always write on the go.
 
-<img src="images/mobile-landscape.png" alt="Mobile screenshot in landscape" style="max-width: 350px%; height: auto;" />
+<img src="images/mobile-landscape.png" alt="Mobile screenshot in landscape" style="max-width: 350px%; max-height: 600px;" />
 
-<img src="images/mobile-portrait.png" alt="Mobile screenshot in portrait" style="max-width: 300px; height: auto;" />
+<img src="images/mobile-portrait.png" alt="Mobile screenshot in portrait" style="max-width: 300px; max-height: 600px;" />
 
 ---
 
