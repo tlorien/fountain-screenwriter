@@ -71,13 +71,13 @@ interface ScreenwriterSettings {
 }
 
 const DEFAULT_SETTINGS: ScreenwriterSettings = {
-  colours: {},
-  showHoverHints: true,
+  colours:             {},
+  showHoverHints:      true,
   enableSyntaxColours: true,
-  enableIndentation: true,
-  tooltipBackground: 'var(--background-secondary)',
-  tooltipText:       'var(--text-normal)',
-  scriptFont: 'Courier Prime',
+  enableIndentation:   true,
+  tooltipBackground:   'var(--background-secondary)',
+  tooltipText:         'var(--text-normal)',
+  scriptFont:          'Courier Prime',
   typewriterScrolling: false,
 };
 
@@ -569,7 +569,7 @@ class MainSettingTab extends PluginSettingTab{
 
     c.createEl('h2',{text:'Behaviour'});
     /* font */
-    new Setting(c)
+/*    new Setting(c)
       .setName('Script font')
       .setDesc('Pick the font you want for your screenplay text—whether classic Courier Prime or something more unique.')
       .addDropdown(drop => {
@@ -589,7 +589,7 @@ class MainSettingTab extends PluginSettingTab{
             await this.plugin.saveData(this.plugin.settings);
             this.plugin.injectColourCSS();
           });
-      });
+      }); */
     /* hover */
     new Setting(c)
       .setName('Show hover hints')
