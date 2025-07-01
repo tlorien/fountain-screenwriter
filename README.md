@@ -1,6 +1,6 @@
 # Fountain Screenwriter for Obsidian
 
-A powerful Obsidian screenwriting plugin powered by [Fountain-JS](https://fountain.io/): real-time syntax highlighting, classic virtual page formatting, dynamic indentation & colour themes, status-bar line-type read-outs, hover tooltips, and seamless desktop & mobile support.
+An Obsidian screenwriting plugin powered by Fountain](https://fountain.io/): featuring real-time **syntax highlighting**, classic virtual **page formatting**, dynamic **indentation**, status-bar **line-type read-outs**, **hover tooltips**, and seamless **desktop & mobile support**.
 
 <img src="images/desktop-1.png" alt="Desktop screenshot" style="max-width: 100%; height: auto; max-height: 600px;" />
 
@@ -82,7 +82,8 @@ Mary watches as her text instantly adopts screenplay styling in Obsidian—no ex
 ```
 
 ## ❤️ Credits & Support
-Built with ❤️ using `@thombruce/Fountain-JS` and Obsidian’s plugin API.
+Built with ❤️ and admiration using `@thombruce/Fountain-JS` and Obsidian’s plugin API.
+
 Find support, report issues, or contribute here on GitHub.
 
 ## 📜 License
