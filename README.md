@@ -87,4 +87,4 @@ Built with ❤️ and admiration using `@thombruce/fountain-js` and Obsidian’s
 Find support, report issues, or contribute here on GitHub.
 
 ## 📜 License
-Distributed under the GPL-3.0 license. See LICENSE for details.
+Distributed under the GPL-3.0 license. See `LICENSE` for details.
