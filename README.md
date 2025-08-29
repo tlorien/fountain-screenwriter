@@ -1,4 +1,5 @@
 # Fountain Screenwriter for Obsidian
+[![Donate](https://img.shields.io/badge/Donate-BuyMeACoffee-orange)](https://www.buymeacoffee.com/tlorien)
 
 An Obsidian screenwriting plugin powered by [FountainJS]([https://github.com/thombruce/FountainJS), featuring real-time **syntax highlighting**, classic virtual **page formatting**, dynamic **indentation**, status-bar **line-type read-outs**, **hover tooltips**, and seamless **desktop & mobile support**.
 
@@ -85,6 +86,8 @@ Mary watches as her text instantly adopts screenplay styling in Obsidian—no ex
 Built with ❤️ and admiration using `@thombruce/fountain-js` and Obsidian’s plugin API.
 
 Find support, report issues, or contribute here on GitHub.
+
+[![If you enjoyed using this project, and are interested in supporting it's future development, you can make a patronage here :D Thank you for reading and for all of your support!](https://img.shields.io/badge/Donate-BuyMeACoffee-orange)](https://www.buymeacoffee.com/tlorien)
 
 ## 📜 License
 Distributed under the GPL-3.0 license. See `LICENSE` for details.
