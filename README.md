@@ -87,8 +87,11 @@ Built with ❤️ and admiration using `@thombruce/fountain-js` and Obsidian’s
 
 Find support, report issues, or contribute here on GitHub.
 
-If you enjoyed using this project, and are interested in supporting it's future development, you can make a patronage here :D Thank you for reading and for all of your support!
+If you enjoyed using this project, and are interested in supporting it's future development, you can make a patronage here:
+
 [![Donate](https://img.shields.io/badge/Donate-BuyMeACoffee-orange)](https://www.buymeacoffee.com/tlorien)
+
+ Thank you for reading and for all of your support!
 
 ## 📜 License
 Distributed under the GPL-3.0 license. See `LICENSE` for details.
